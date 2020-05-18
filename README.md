@@ -25,7 +25,7 @@ social_freedom_score (Smallint)
 #### source_data
 source_ID (PK, serial),
 source_name (Varchar),
-source_page (Varchar),
+source_page (Varchar, unique),
 econimic_score_av (Smallint),
 social_score_av (Smallint),
 trust_score_av (Smallint)
