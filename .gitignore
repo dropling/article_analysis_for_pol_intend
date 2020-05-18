@@ -1,0 +1,9 @@
+# File endings
+*.ini
+*.bak
+
+# File names
+config
+
+# Folders
+**/.spyproject
