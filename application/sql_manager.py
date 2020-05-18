@@ -9,6 +9,10 @@ import psycopg2 as pg2
 import datetime
 
 """
+This file implements an class which manages the read and write tasks for the
+specifically designed database. It is initialized with the database name,
+username and password which are stored elsewhere.
+
 To do:
     get_author_ID (maybe just use one mod. function for source and author)
     Comment stuff
@@ -152,7 +156,7 @@ class Sql_manager():
         input_data = f"'{source_ID}',"
         
         if(not source_ID):
-            return None
+            return False
         
         if(author_name):
             author_ID = self.get_author_ID(author_name)
@@ -180,10 +184,16 @@ class Sql_manager():
         for key, value in self.create_var_dict():
             input_data_variables += f",'{key}'"
             input_data += f",'{value}'"
-            
-        self.cur.execute(f"INSERT INTO article_data({input_data_variables}) VALUES({input_data})")
-        self.conn.commit()
         
+        try:
+            self.cur.execute(f"INSERT INTO article_data({input_data_variables}) VALUES({input_data})")
+            self.conn.commit()
+        except:
+            self.conn.rollback()
+            return False
+        
+        return True
+    
     def get_date(self):
         current_date = datetime.datetime.now()
         return str(current_date.year)+'-'+str(current_date.month)+'-'+str(current_date.day)
