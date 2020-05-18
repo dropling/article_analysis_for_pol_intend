@@ -7,3 +7,4 @@ config
 
 # Folders
 **/.spyproject
+**/.ipynb_checkpoints
