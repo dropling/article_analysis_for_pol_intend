@@ -2,7 +2,7 @@
 """
 Created on Sun May 17 21:21:12 2020
 
-@author: marku
+@author: dropling
 """
 
 import psycopg2 as pg2
