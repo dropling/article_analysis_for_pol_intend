@@ -70,18 +70,24 @@ class Sql_manager():
             self.conn = None
         return True
     
-    # Get the source_ID. If source not found, insert new source, repeat once
-    # Return source_ID if found. Return None if failed.
-    def get_source_ID(self, source):
-    
-        # Create flag to avoid being trapped in loop
+    # gets the ID from the source_data table or the author_data table
+    # based on the unique identifiers: source or author_name
+    def get_ID(self, identifier, table):
+        ID_val = ""
         flag = 0
+        # Check the table argument. If not valid, return None
+        if(table == 'source_data'):
+            ID_val = 'source_ID'
+        elif(table == 'author_data'):
+            ID_val = 'author_ID'
+        else:
+            return None
         
-        while(True):
+        for cycle in range(2):
             
             try:
                 # Try to read the source_ID necessary for the article insertion statement into article_data
-                self.cur.execute(f"SELECT source_ID FROM source_data WHERE source like '{source}'")
+                self.cur.execute(f"SELECT {ID_val} FROM {table} WHERE source like '{identifier}'")
             except:
                 # If an error occurs, rollback the connection and return None as an error hint
                 self.conn.rollback()
@@ -94,6 +100,7 @@ class Sql_manager():
             # If no value was read, create new entry with source. Since while is still running, there will be repeat
             # If more than one or zero values were received or something unforeseen, return None
             if(len(result) == 1):
+                # extract value from list of tuple
                 return result[0][0]
             elif(len(result) == 0):
                 
@@ -102,49 +109,51 @@ class Sql_manager():
                     return None
                 
                 # insert_new_source() returns either True or False depending on the success of the insertion
-                if(not self.insert_new_source(source)):
+                if(not self.insert_new_entry_in_source_data_or_author_data(identifier, table)):
                     
                     # If insertion failed: return None
                     return None
-                
-                # Set flag to avoid being trapped in loop
                 flag = 1
             else:
                 return None
+        # If while loop ended even 
+        return None
     
-    # Insert a new source. If successful return True, otherwise False
-    def insert_new_source(self, source, source_name = None):
     
-        # Check if the source and source name are available to fill another field
-        if(source_name and source):
-            
-            # Execute query. If failed, return False, if successfull (No error was detected) return True
-            try:
-                self.cur.execute(f"INSERT INTO source_data(source_name,source_page) VALUES('{source_name}','{source}')")
-                self.conn.commit()
-            except:
-                self.conn.rollback()
-                return False
-            
-            return True
+    def insert_new_entry_in_source_data_or_author_data(self, identifier, table):
+        
+        # Set variable name based on the table
+        var_name = None
+        if(table == 'author_data'):
+            var_name = 'author_name'
+        elif(table == 'article_data'):
+            var_name = 'source_page'
+        else:
+            return False
         
         # Source name is not available but source is
-        elif(not source_name and source):
+        if(identifier and table and var_name):
             
             # Execute query. If failed, return False, if successfull (No error was detected) return True
             try:
-                self.cur.execute(f"INSERT INTO source_data(source_page) VALUES('{source}')")
+                self.cur.execute(f"INSERT INTO {table}({var_name}) VALUES('{identifier}')")
                 self.conn.commit()
             except:
                 self.conn.rollback()
                 return False
             
             return True
-        
-        # None is or error
-        else:
-            pass
         return False
+    
+    # Get the source_ID. If source not found, insert new source, repeat once
+    # Return source_ID if found. Return None if failed.
+    def get_source_ID(self, source):
+        return self.get_ID(source, 'source_data')
+        
+    # Gets the author_ID by author_name. If ID not found, automatically adds
+    # New entry and returns ID. Returns None if failed.
+    def get_author_ID(self, author_name):
+        return self.get_ID(author_name, 'author_data')
     
     # Steps for the insertion of the article data:
     # Get source_ID, Insert_information
