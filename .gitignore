@@ -1,9 +1,12 @@
 # File endings
 *.ini
 *.bak
+*.log
+*.exe
 
 # File names
 config
+geckodriver
 
 # Folders
 **/.spyproject
