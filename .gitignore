@@ -3,6 +3,8 @@
 *.bak
 *.log
 *.exe
+*.json
+*.pyc
 
 # File names
 config
@@ -11,3 +13,4 @@ geckodriver
 # Folders
 **/.spyproject
 **/.ipynb_checkpoints
+**/__pycache__
