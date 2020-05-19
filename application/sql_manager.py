@@ -4,7 +4,7 @@ Created on Sun May 17 21:21:12 2020
 
 @author: dropling
 """
-
+from lib.metrics import debug_measure_run_time, set_logging_file
 import psycopg2 as pg2
 import datetime
 
@@ -26,9 +26,10 @@ class Sql_manager():
     database = None
     user = None
     pw = None
-    
     # Initialization script, save options, open connection
+    @debug_measure_run_time
     def  __init__(self, database, user, password):
+        
         self.database = database
         self.user = user
         self.pw = password
@@ -36,8 +37,11 @@ class Sql_manager():
         if(self.open_connection() == False):
             # Log.log('Sql_manager: Initialization failed!')
             raise Exception('Initialization failed!')
+        
+        print('Initialization successful!')
     
     # Check if options valid type, try open connection
+    @debug_measure_run_time
     def open_connection(self):
         if(self.check_connection_settings_content_on_type()):
             try:
@@ -50,6 +54,7 @@ class Sql_manager():
         return True
     
     # Check if the options are not None and type String
+    @debug_measure_run_time
     def check_connection_settings_content_on_type(self):
         for setting in [self.database, self.user, self.pw]:
             if(not setting):
@@ -60,6 +65,7 @@ class Sql_manager():
     
     # Check if connection is active, try to close.
     # Return False if closing not successful. Otherwise return True
+    @debug_measure_run_time
     def close_connection(self):
         if self.conn:
             try:
@@ -72,14 +78,18 @@ class Sql_manager():
     
     # gets the ID from the source_data table or the author_data table
     # based on the unique identifiers: source or author_name
+    @debug_measure_run_time
     def get_ID(self, identifier, table):
         ID_val = ""
+        col = ""
         flag = 0
         # Check the table argument. If not valid, return None
         if(table == 'source_data'):
-            ID_val = 'source_ID'
+            ID_val = 'source_id'
+            col = 'source_page'
         elif(table == 'author_data'):
-            ID_val = 'author_ID'
+            ID_val = 'author_id'
+            col = 'author_name'
         else:
             return None
         
@@ -87,7 +97,7 @@ class Sql_manager():
             
             try:
                 # Try to read the source_ID necessary for the article insertion statement into article_data
-                self.cur.execute(f"SELECT {ID_val} FROM {table} WHERE source like '{identifier}'")
+                self.cur.execute(f"SELECT {ID_val} FROM {table} WHERE {col} like '%{identifier}%'")
             except:
                 # If an error occurs, rollback the connection and return None as an error hint
                 self.conn.rollback()
@@ -119,7 +129,7 @@ class Sql_manager():
         # If while loop ended even 
         return None
     
-    
+    @debug_measure_run_time
     def insert_new_entry_in_source_data_or_author_data(self, identifier, table):
         
         # Set variable name based on the table
@@ -147,16 +157,19 @@ class Sql_manager():
     
     # Get the source_ID. If source not found, insert new source, repeat once
     # Return source_ID if found. Return None if failed.
+    @debug_measure_run_time
     def get_source_ID(self, source):
         return self.get_ID(source, 'source_data')
         
     # Gets the author_ID by author_name. If ID not found, automatically adds
     # New entry and returns ID. Returns None if failed.
+    @debug_measure_run_time
     def get_author_ID(self, author_name):
         return self.get_ID(author_name, 'author_data')
     
     # Steps for the insertion of the article data:
     # Get source_ID, Insert_information
+    @debug_measure_run_time
     def insert_article_data(self, source, article_title, article_text, author_name = None):
         source_ID = self.get_source_ID(source)
         author_ID = None
@@ -203,6 +216,7 @@ class Sql_manager():
         
         return True
     
+    @debug_measure_run_time
     def get_date(self):
         current_date = datetime.datetime.now()
         return str(current_date.year)+'-'+str(current_date.month)+'-'+str(current_date.day)
